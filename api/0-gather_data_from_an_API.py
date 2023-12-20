@@ -1,44 +1,53 @@
 #!/usr/bin/python3
-"""
-    data gathering from api module
-"""
+"""Script to return info about todo list progress"""
 import requests
-import sys
+from requests import get
+from sys import argv
 
-# python3 0-gather_data_from_an_API.py 2 is the run command where two is the id
-employee_id = sys.argv[1]
 
-# uses request import to get the data from the api
-user_response = requests.get(
-    'https://jsonplaceholder.typicode.com/users/' + employee_id)
+def information_employee():
+    """Returns information about employees"""
+    id_employee = int(argv[1])
+    id_employee = int(argv[1])
+    employee_name = ""
+    number_of_done_task = 0
+    total_number_of_task = 0
+    task_title = []
 
-# converts the data to json format
-data = user_response.json()
+    url_users = 'https://jsonplaceholder.typicode.com/users'
 
-# gets the name of the employee
-employee_name = data['name']
+    # Get user data
+    user_url = f"https://jsonplaceholder.typicode.com/users/{id_employee}"
+    user_response = requests.get(user_url)
+    user_data = user_response.json()
+    employee_name = user_data['name']
 
-# gets the tasks of the employee
-todo_response = requests.get(
-    'https://jsonplaceholder.typicode.com/todos?userId=' + employee_id)
+    url_todos = 'https://jsonplaceholder.typicode.com/todos'
 
-# converts the tasks data to json format
-todo_data = todo_response.json()
+    response_one = get(url_users)
+    response_two = get(url_todos)
 
-# gets the total number of tasks
-todo_total = str(len(todo_data))
+    if response_one.status_code == 200:
+        response_json_usr = response_one.json()
+        response_json_tod = response_two.json()
 
-# gets the number of completed tasks
-todo_completed = str(sum(1 for task in todo_data if task['completed']))
+        for user in response_json_usr:
+            if (user['id'] == id_employee):
+                employee_name = user['name']
 
-# prints the data in the format required
-print('Employee {} is done with tasks({}/{}):'.format(employee_name,
-      todo_completed, todo_total))
+                for tod in response_json_tod:
+                    if tod['userId'] == id_employee:
+                        total_number_of_task += 1
+                        if tod['completed'] is True:
+                            number_of_done_task += 1
+                            task_title.append(tod['title'])
 
-# prints the completed tasks by title of task
-for task in todo_data:
-    if task['completed']:
-        print('\t {}'.format(task['title']))
+        print('Employee {} is done with tasks({}/{}):'
+              .format(employee_name, number_of_done_task,
+                      total_number_of_task))
+        for title in task_title:
+            print('\t {}'.format(title))
 
-if __name__ == '__main__':
-    pass
+
+if __name__ == "__main__":
+    information_employee()
