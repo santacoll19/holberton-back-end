@@ -1,32 +1,33 @@
 #!/usr/bin/python3
-"""
-    dictionary of list of dictionaries module
-"""
+"""Script to export data in the JSON format"""
+
 import json
 import requests
-
-users = requests.get('https://jsonplaceholder.typicode.com/users').json()
-
-todos = requests.get('https://jsonplaceholder.typicode.com/todos').json()
-
-user_dict = {}
-
-# loop to make id dictionary
-for user in users:
-    user_id = user.get('id')
-    user_dict[user_id] = []
-    # loop to make task dictionary
-    for task in todos:
-        if user_id == task.get('userId'):
-            user_dict[user_id].append({
-                'task': task.get('title'),
-                'completed': task.get('completed'),
-                'username': user.get('username')
-            })
-
-with open('todo_all_employees.json', 'w') as jsonfile:
-    json.dump(user_dict, jsonfile)
+from sys import argv
 
 
-if __name__ == '__main__':
-    pass
+def information_employee(id_employee):
+    """Returns information about employees"""
+    employee_name = ""
+    task_data = []
+
+    url_users = 'https://jsonplaceholder.typicode.com/users'
+    url_todos = 'https://jsonplaceholder.typicode.com/todos'
+
+    response_one = requests.get(url_users)
+    response_two = requests.get(url_todos)
+
+    if response_one.status_code == 200:
+        response_json_usr = response_one.json()
+        response_json_tod = response_two.json()
+
+        for user in response_json_usr:
+            if user['id'] == id_employee:
+                employee_name = user['username']
+
+                for tod in response_json_tod:
+                    if tod['userId'] == id_employee:
+                        task_data.append(tod)
+
+        # Call the function to export data to JSON
+        export_to_json(id_employee, employee_name, task_data)

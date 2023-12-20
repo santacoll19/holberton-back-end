@@ -1,54 +1,24 @@
 #!/usr/bin/python3
-"""
-    data gathering from api module
-"""
-import json
-import requests
-import sys
+"""Script to export data i  the JSON format"""
 
 
-# python3 0-gather_data_from_an_API.py 2 is the run command where two is the id
-employee_id = sys.argv[1]
+if __name__ == "__main__":
+    import json
+    import requests
+    from sys import argv
 
-# uses request import to get the data from the api
-user_response = requests.get(
-    'https://jsonplaceholder.typicode.com/users/' + employee_id)
-
-# converts the data to json format
-data = user_response.json()
-
-# gets the name of the employee
-employee_name = data['name']
-
-# gets the tasks of the employee
-todo_response = requests.get(
-    'https://jsonplaceholder.typicode.com/todos?userId=' + employee_id)
-
-# converts the tasks data to json format
-todo_data = todo_response.json()
-
-# gets the total number of tasks
-todo_total = str(len(todo_data))
-
-# gets the number of completed tasks
-todo_completed = str(sum(1 for task in todo_data if task['completed']))
-
-# prints the data in the format required
-print('Employee {} is done with tasks({}/{}):'.format(employee_name,
-      todo_completed, todo_total))
-
-# prints the completed tasks by title of task
-for task in todo_data:
-    if task['completed']:
-        print('\t {}'.format(task['title']))
-
-# Export using json format
-with open('USER_ID.json', 'w') as jsonfile:
-    json.dump({employee_id: [{
-        "task": task['title'],
-        "completed": task['completed'],
-        "username": employee_name
-    } for task in todo_data]}, jsonfile)
-
-if __name__ == '__main__':
-    pass
+    u_id = argv[1]
+    api_url = "https://jsonplaceholder.typicode.com/users/{}".format(u_id)
+    api_url2 = "https://jsonplaceholder.typicode.com/todos?userId={}"\
+        .format(u_id)
+    response = requests.get(api_url).json()
+    EMPLOYEE_NAME = response.get('username')
+    response = requests.get(api_url2).json()
+    f_name = u_id + '.json'
+    u_list = {u_id: []}
+    for info in response:
+        dic = {"task": info.get('title'), "completed": info.get('completed'),
+               "username": EMPLOYEE_NAME}
+        u_list.get(u_id).append(dic)
+    with open(f_name, 'w', encoding='utf-8') as f:
+        json.dump(u_list, f)

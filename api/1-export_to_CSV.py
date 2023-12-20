@@ -1,57 +1,54 @@
 #!/usr/bin/python3
-"""
-    data gathering from api module
-    and exporting to a csv file
-"""
+"""Script to export data in the CSV format"""
+from requests import get
+from sys import argv
 import csv
-import requests
-import sys
 
 
-# python3 0-gather_data_from_an_API.py 2 is the run command where two is the id
-employee_id = sys.argv[1]
+def information_employee(id_employee):
+    """Returns information about employees"""
+    employee_name = ""
+    task_data = []
 
-# uses request import to get the data from the api
-user_response = requests.get(
-    'https://jsonplaceholder.typicode.com/users/' + employee_id)
+    url_users = 'https://jsonplaceholder.typicode.com/users'
+    url_todos = 'https://jsonplaceholder.typicode.com/todos'
 
-# converts the data to json format
-data = user_response.json()
+    response_one = get(url_users)
+    response_two = get(url_todos)
 
-# gets the name of the employee
-employee_name = data['name']
+    if response_one.status_code == 200:
+        response_json_usr = response_one.json()
+        response_json_tod = response_two.json()
 
-# gets the tasks of the employee
-todo_response = requests.get(
-    'https://jsonplaceholder.typicode.com/todos?userId=' + employee_id)
+        for user in response_json_usr:
+            if user['id'] == id_employee:
+                employee_name = user['username']
 
-# converts the tasks data to json format
-todo_data = todo_response.json()
+                for tod in response_json_tod:
+                    if tod['userId'] == id_employee:
+                        task_data.append(tod)
 
-# gets the total number of tasks
-todo_total = str(len(todo_data))
+        # Call the function to export data to CSV
+        export_to_csv(id_employee, employee_name, task_data)
 
-# gets the number of completed tasks
-todo_completed = str(sum(1 for task in todo_data if task['completed']))
 
-# prints the data in the format required
-print('Employee {} is done with tasks({}/{}):'.format(employee_name,
-      todo_completed, todo_total))
+def export_to_csv(user_id, employee_name, task_data):
+    """Exports the employee information to a CSV file"""
+    filename = f"{user_id}.csv"
 
-# prints the completed tasks by title of task
-for task in todo_data:
-    if task['completed']:
-        print('\t {}'.format(task['title']))
+    with open(filename, mode='w', newline='') as csvfile:
+        csv_writer = csv.writer(csvfile, delimiter=',',
+                                quotechar='"', quoting=csv.QUOTE_ALL)
 
-# Export using csv format
-with open('USER_ID.csv', 'w') as csvfile:
-    # Ceating a csv writer object
-    # Quoting=csv.QUOTE_ALL to quote all the fields
-    writer = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
-    for task in todo_data:
-        # Writing the fields to the csv file
-        writer.writerow([employee_id, employee_name, task['completed'],
-                         task['title']])
+        for task in task_data:
+            csv_writer.writerow(
+                [user_id, employee_name, task['completed'], task['title']])
 
-if __name__ == '__main__':
-    pass
+
+if __name__ == "__main__":
+    if len(argv) != 2:
+        print("Usage: python script.py <employee_id>")
+        exit(1)
+
+    employee_id = int(argv[1])
+    information_employee(employee_id)
